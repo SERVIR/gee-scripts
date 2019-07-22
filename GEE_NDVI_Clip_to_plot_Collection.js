@@ -1,16 +1,15 @@
 var plots = ee.FeatureCollection("users/billyz313/sample-plots");
 
 var l8 = ee.ImageCollection('LANDSAT/LC08/C01/T1_TOA')
-            .filterMetadata('CLOUD_COVER','less_than',100)
-            .filterDate('2014-01-01', '2014-12-31')
+            .filterMetadata('CLOUD_COVER', 'less_than',100)
+            .filterDate('2014-01-01', '2014-12-31');
             
+var NDVIPlotsClipped = l8.filterBounds(plots).map(calcNDVI);
 
-var NDVIPlotsClipped = l8.filterBounds(plots).map(calcNDVI)
+var nImages = NDVIPlotsClipped.size().getInfo();
+var icList = NDVIPlotsClipped.toList(nImages);
 
-var nImages = NDVIPlotsClipped.size().getInfo()
-var icList = NDVIPlotsClipped.toList(nImages)
-
-for (var i=0; i < nImages; i++) {
+for (var i = 0; i < nImages; i++) {
   var thisImg = ee.Image(icList.get(i))
   //Export the image to an Earth Engine asset.
   Export.image.toAsset({
@@ -24,5 +23,5 @@ for (var i=0; i < nImages; i++) {
 
 function calcNDVI(img){
         return img.expression('(i[4] - i[3]) / (i[4] + i[3])',  {'i': img}).rename(['NDVI'])
-                .set('system:time_start',img.get('system:time_start')).clip(plots)
+                .set('system:time_start', img.get('system:time_start')).clip(plots);
 }
